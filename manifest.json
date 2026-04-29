@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Design to Markdown",
+  "version": "1.0",
+  "description": "Extract a website’s design (colors, typography, layout, images, animations) into a markdown file.",
+  "permissions": ["activeTab", "scripting", "downloads"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Extract Design"
+  }
+}

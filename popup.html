@@ -2,16 +2,63 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <style>
-    body { width: 280px; padding: 16px; font-family: system-ui, sans-serif; }
-    button { width: 100%; padding: 10px; font-size: 14px; cursor: pointer; }
-    #status { margin-top: 12px; font-size: 0.9em; color: #333; white-space: pre-wrap; }
-  </style>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h3>Design → Markdown</h3>
-  <button id="extractBtn">Extract Design</button>
-  <div id="status"></div>
-  <script src="popup.js"></script>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <span class="dot"></span>
+        <h1>Design DNA</h1>
+      </div>
+      <p class="subtitle">Extract every pixel of design intent</p>
+    </header>
+
+    <section class="options">
+      <h2>What to extract</h2>
+      <div class="grid">
+        <label><input type="checkbox" id="opt-css" checked> 🎨 CSS & Tokens</label>
+        <label><input type="checkbox" id="opt-typo" checked> 🔤 Typography</label>
+        <label><input type="checkbox" id="opt-layout" checked> 🧩 Layout Tree</label>
+        <label><input type="checkbox" id="opt-anim" checked> ⚡ Animations (GSAP, CSS, Lottie)</label>
+        <label><input type="checkbox" id="opt-scroll" checked> 🖱️ ScrollTrigger / IO</label>
+        <label><input type="checkbox" id="opt-hover" checked> ✨ Hover & Focus</label>
+        <label><input type="checkbox" id="opt-pseudo" checked> 🪞 Pseudo-elements</label>
+        <label><input type="checkbox" id="opt-shadow" checked> 🫥 Shadow DOM</label>
+        <label><input type="checkbox" id="opt-iframe"> 🖼️ iframes</label>
+        <label><input type="checkbox" id="opt-svg" checked> 🎭 SVG Filters</label>
+        <label><input type="checkbox" id="opt-three"> 🌐 Three.js / WebGL</label>
+        <label><input type="checkbox" id="opt-tailwind" checked> 🌀 Tailwind detect</label>
+        <label><input type="checkbox" id="opt-fingerprint" checked> 🧬 Component fingerprint</label>
+        <label><input type="checkbox" id="opt-external" checked> 📦 External JS scan</label>
+        <label><input type="checkbox" id="opt-screenshot"> 📸 Full-page screenshot</label>
+      </div>
+    </section>
+
+    <section class="format">
+      <h2>Output</h2>
+      <div class="radios">
+        <label><input type="radio" name="format" value="md" checked> Markdown</label>
+        <label><input type="radio" name="format" value="json"> JSON</label>
+        <label><input type="radio" name="format" value="both"> Both</label>
+      </div>
+    </section>
+
+    <button id="extractBtn" class="btn-primary">
+      <span class="btn-text">Extract Design</span>
+      <span class="spinner" hidden></span>
+    </button>
+
+    <div id="progress" class="progress" hidden>
+      <div class="bar"><div class="fill"></div></div>
+      <div id="status" class="status"></div>
+    </div>
+
+    <footer>
+      <a href="#" id="settingsLink">Advanced</a>
+      <span class="version">v2.0.0</span>
+    </footer>
+  </div>
+  <script src="popup.js" type="module"></script>
 </body>
 </html>

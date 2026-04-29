@@ -1,11 +1,36 @@
 {
   "manifest_version": 3,
-  "name": "Design to Markdown",
-  "version": "1.0",
-  "description": "Extract a website’s design (colors, typography, layout, images, animations) into a markdown file.",
-  "permissions": ["activeTab", "scripting", "downloads"],
+  "name": "Design DNA — Ultimate Extractor",
+  "version": "2.0.0",
+  "description": "Extract every design detail: colors, typography, layout, animations (GSAP/Lottie/Three.js/Framer/anime), interactions, Shadow DOM, iframes, pseudo-elements, scroll-driven animations, and more.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Extract Design"
-  }
+    "default_title": "Extract Design DNA",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["extractors/*.js", "lib/*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }

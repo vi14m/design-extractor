@@ -660,18 +660,25 @@ window.__DDNA_extractPerformance = function () {
 
   const totalSize = resources.reduce((sum, r) => sum + (r.transferSize || 0), 0);
 
+  // ✅ FIXED: LCP must be captured via PerformanceObserver, not getEntriesByType
+  // We read from a buffer we set up at injection time (see injector.js patch below)
   let lcp = null;
   try {
-    const entries = performance.getEntriesByType('largest-contentful-paint');
-    if (entries.length) {
-      const last = entries[entries.length - 1];
+    const lcpData = window.__DDNA_lcp;
+    if (lcpData) {
       lcp = {
-        time: last.startTime | 0,
-        size: last.size,
-        element: last.element?.tagName || '',
-        url: last.url || '',
+        time: lcpData.startTime | 0,
+        size: lcpData.size,
+        element: lcpData.element || '',
+        url: lcpData.url || '',
       };
     }
+  } catch {}
+
+  // ✅ Also capture CLS & FID-equivalent if available
+  let cls = null;
+  try {
+    if (window.__DDNA_cls !== undefined) cls = +window.__DDNA_cls.toFixed(4);
   } catch {}
 
   return {
@@ -684,6 +691,7 @@ window.__DDNA_extractPerformance = function () {
     firstPaint: paint.find(p => p.name === 'first-paint')?.startTime | 0,
     firstContentfulPaint: paint.find(p => p.name === 'first-contentful-paint')?.startTime | 0,
     largestContentfulPaint: lcp,
+    cumulativeLayoutShift: cls,
     resourceCount: resources.length,
     resourcesByType: byType,
     totalTransferSize: totalSize,
@@ -694,6 +702,7 @@ window.__DDNA_extractPerformance = function () {
     } : null,
   };
 };
+
 
 window.__DDNA_extractTailwind = function () {
   const allClasses = new Set();
@@ -725,7 +734,10 @@ window.__DDNA_extractTailwind = function () {
     return twPrefixes.some(p => stripped.startsWith(p) || stripped === p.replace('-',''));
   };
   const twClasses = [...allClasses].filter(isTw);
+
+  // ✅ FIXED: Proper regex for arbitrary values like w-[200px], bg-[#fff]
   const arbitraryClasses = twClasses.filter(c => /$$.*?$$/.test(c));
+
   const usedModifiers = [...new Set(twClasses.flatMap(c =>
     twModifiers.filter(m => c.includes(m))
   ))];

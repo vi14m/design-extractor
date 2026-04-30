@@ -58,6 +58,68 @@
     Patched.__ddnaPatched = true;
     window.IntersectionObserver = Patched;
   });
+  
+    // ─── Capture LCP via PerformanceObserver ───
+  safe('LCP observer', () => {
+    if (!window.PerformanceObserver) return;
+    if (window.__DDNA_lcpObserver) return;
+    try {
+      const obs = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const last = entries[entries.length - 1];
+        if (last) {
+          window.__DDNA_lcp = {
+            startTime: last.startTime,
+            size: last.size,
+            element: last.element?.tagName || '',
+            url: last.url || '',
+          };
+        }
+      });
+      obs.observe({ type: 'largest-contentful-paint', buffered: true });
+      window.__DDNA_lcpObserver = obs;
+    } catch {}
+  });
+
+  // ─── Capture CLS via PerformanceObserver ───
+  safe('CLS observer', () => {
+    if (!window.PerformanceObserver) return;
+    if (window.__DDNA_clsObserver) return;
+    try {
+      window.__DDNA_cls = 0;
+      const obs = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (!entry.hadRecentInput) {
+            window.__DDNA_cls += entry.value;
+          }
+        }
+      });
+      obs.observe({ type: 'layout-shift', buffered: true });
+      window.__DDNA_clsObserver = obs;
+    } catch {}
+  });
+
+  // ─── Capture long tasks ───
+  safe('Long task observer', () => {
+    if (!window.PerformanceObserver) return;
+    if (window.__DDNA_longTaskObserver) return;
+    try {
+      window.__DDNA_longTasks = [];
+      const obs = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (window.__DDNA_longTasks.length < 50) {
+            window.__DDNA_longTasks.push({
+              duration: entry.duration | 0,
+              startTime: entry.startTime | 0,
+              name: entry.name,
+            });
+          }
+        }
+      });
+      obs.observe({ type: 'longtask', buffered: true });
+      window.__DDNA_longTaskObserver = obs;
+    } catch {}
+  });
 
   // ─── Patch MutationObserver ───
   safe('MutationObserver', () => {

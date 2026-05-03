@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Design DNA — Ultimate Extractor",
-  "version": "2.0.0",
-  "description": "Extract every design detail: colors, typography, layout, animations (GSAP/Lottie/Three.js/Framer/anime), interactions, Shadow DOM, iframes, pseudo-elements, scroll-driven animations, and more.",
+  "version": "2.1.0",
+  "description": "Extract every design detail and generate AI-enhanced DESIGN.md specifications. Supports colors, typography, layout, animations (GSAP/Lottie/Three.js/Framer/anime), interactions, Shadow DOM, and more.",
   "permissions": [
     "activeTab",
     "scripting",

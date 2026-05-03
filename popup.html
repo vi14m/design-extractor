@@ -14,49 +14,105 @@
       <p class="subtitle">Extract every pixel of design intent</p>
     </header>
 
-    <section class="options">
-      <h2>What to extract</h2>
-      <div class="grid">
-        <label><input type="checkbox" id="opt-css" checked> 🎨 CSS & Tokens</label>
-        <label><input type="checkbox" id="opt-typo" checked> 🔤 Typography</label>
-        <label><input type="checkbox" id="opt-layout" checked> 🧩 Layout Tree</label>
-        <label><input type="checkbox" id="opt-anim" checked> ⚡ Animations (GSAP, CSS, Lottie)</label>
-        <label><input type="checkbox" id="opt-scroll" checked> 🖱️ ScrollTrigger / IO</label>
-        <label><input type="checkbox" id="opt-hover" checked> ✨ Hover & Focus</label>
-        <label><input type="checkbox" id="opt-pseudo" checked> 🪞 Pseudo-elements</label>
-        <label><input type="checkbox" id="opt-shadow" checked> 🫥 Shadow DOM</label>
-        <label><input type="checkbox" id="opt-iframe"> 🖼️ iframes</label>
-        <label><input type="checkbox" id="opt-svg" checked> 🎭 SVG Filters</label>
-        <label><input type="checkbox" id="opt-three"> 🌐 Three.js / WebGL</label>
-        <label><input type="checkbox" id="opt-tailwind" checked> 🌀 Tailwind detect</label>
-        <label><input type="checkbox" id="opt-fingerprint" checked> 🧬 Component fingerprint</label>
-        <label><input type="checkbox" id="opt-external" checked> 📦 External JS scan</label>
-        <label><input type="checkbox" id="opt-screenshot"> 📸 Full-page screenshot</label>
+    <!-- MAIN VIEW -->
+    <div id="mainView">
+      <section class="options">
+        <h2>What to extract</h2>
+        <div class="grid">
+          <label><input type="checkbox" id="opt-css" checked> 🎨 CSS & Tokens</label>
+          <label><input type="checkbox" id="opt-typo" checked> 🔤 Typography</label>
+          <label><input type="checkbox" id="opt-layout" checked> 🧩 Layout Tree</label>
+          <label><input type="checkbox" id="opt-anim" checked> ⚡ Animations (GSAP, CSS, Lottie)</label>
+          <label><input type="checkbox" id="opt-scroll" checked> 🖱️ ScrollTrigger / IO</label>
+          <label><input type="checkbox" id="opt-hover" checked> ✨ Hover & Focus</label>
+          <label><input type="checkbox" id="opt-pseudo" checked> 🪞 Pseudo-elements</label>
+          <label><input type="checkbox" id="opt-shadow" checked> 🫥 Shadow DOM</label>
+          <label><input type="checkbox" id="opt-iframe"> 🖼️ iframes</label>
+          <label><input type="checkbox" id="opt-svg" checked> 🎭 SVG Filters</label>
+          <label><input type="checkbox" id="opt-three"> 🌐 Three.js / WebGL</label>
+          <label><input type="checkbox" id="opt-tailwind" checked> 🌀 Tailwind detect</label>
+          <label><input type="checkbox" id="opt-fingerprint" checked> 🧬 Component fingerprint</label>
+          <label><input type="checkbox" id="opt-external" checked> 📦 External JS scan</label>
+          <label><input type="checkbox" id="opt-screenshot"> 📸 Full-page screenshot</label>
+        </div>
+      </section>
+
+      <section class="format">
+        <h2>Output Format</h2>
+        <div class="radios">
+          <label><input type="radio" name="exportFormat" value="md-spec" checked> Design Spec (MD)</label>
+          <label><input type="radio" name="exportFormat" value="md-tech"> Technical Report (MD)</label>
+          <label><input type="radio" name="exportFormat" value="json"> JSON</label>
+          <label><input type="radio" name="exportFormat" value="both"> Both (Spec + JSON)</label>
+        </div>
+        <div class="ai-toggle">
+          <label class="ai-label" id="aiToggleLabel">
+            <input type="checkbox" id="opt-ai-enhance">
+            <span class="ai-icon">🤖</span>
+            <span>AI-Enhanced DESIGN.md</span>
+            <span class="ai-badge" id="aiBadge">API key needed</span>
+          </label>
+        </div>
+      </section>
+
+      <button id="extractBtn" class="btn-primary">
+        <span class="btn-text">Extract Design</span>
+        <span class="spinner" hidden></span>
+      </button>
+
+      <div id="progress" class="progress" hidden>
+        <div class="bar"><div class="fill"></div></div>
+        <div id="status" class="status"></div>
       </div>
-    </section>
+    </div>
 
-    <section class="format">
-      <h2>Output</h2>
-      <div class="radios">
-        <label><input type="radio" name="format" value="md" checked> Markdown</label>
-        <label><input type="radio" name="format" value="json"> JSON</label>
-        <label><input type="radio" name="format" value="both"> Both</label>
-      </div>
-    </section>
+    <!-- SETTINGS VIEW -->
+    <div id="settingsView" hidden>
+      <section class="settings-panel">
+        <h2>🤖 LLM Configuration</h2>
+        <p class="settings-desc">Connect an LLM API to generate editorial-quality DESIGN.md specifications from extracted data.</p>
 
-    <button id="extractBtn" class="btn-primary">
-      <span class="btn-text">Extract Design</span>
-      <span class="spinner" hidden></span>
-    </button>
+        <div class="field">
+          <label for="llm-provider">Provider</label>
+          <select id="llm-provider">
+            <option value="openrouter" selected>OpenRouter (free models)</option>
+            <option value="openai">OpenAI</option>
+            <option value="custom">Custom endpoint</option>
+          </select>
+        </div>
 
-    <div id="progress" class="progress" hidden>
-      <div class="bar"><div class="fill"></div></div>
-      <div id="status" class="status"></div>
+        <div class="field" id="customUrlField" hidden>
+          <label for="llm-custom-url">API Endpoint</label>
+          <input type="url" id="llm-custom-url" placeholder="https://api.example.com/v1/chat/completions">
+        </div>
+
+        <div class="field">
+          <label for="llm-api-key">API Key</label>
+          <div class="key-input">
+            <input type="password" id="llm-api-key" placeholder="sk-… or gsk_…">
+            <button id="toggleKeyVisibility" class="btn-icon" title="Show/Hide">👁️</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="llm-model">Model</label>
+          <select id="llm-model">
+            <option value="">Default</option>
+          </select>
+        </div>
+
+        <div class="settings-actions">
+          <button id="saveSettingsBtn" class="btn-primary btn-sm">Save Settings</button>
+          <button id="backBtn" class="btn-secondary btn-sm">← Back</button>
+        </div>
+
+        <div id="settingsStatus" class="status"></div>
+      </section>
     </div>
 
     <footer>
-      <a href="#" id="settingsLink">Advanced</a>
-      <span class="version">v2.0.0</span>
+      <a href="#" id="settingsLink">⚙ Settings</a>
+      <span class="version">v2.1.0</span>
     </footer>
   </div>
   <script src="popup.js" type="module"></script>

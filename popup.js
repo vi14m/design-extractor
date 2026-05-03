@@ -1,5 +1,5 @@
 // popup.js — Design DNA orchestrator (modular ES module)
-import { generateMarkdown } from './lib/markdown.js';
+import { generateMarkdown, generateDesignSpec } from './lib/markdown.js';
 import {
   generateJSON,
   generateSummaryJSON,
@@ -7,6 +7,12 @@ import {
   generateDesignTokensJSON,
   generateTailwindConfig,
 } from './lib/json-export.js';
+import {
+  callLLM,
+  loadLLMConfig,
+  saveLLMConfig,
+  PROVIDERS,
+} from './lib/llm-engine.js';
 
 // ─────────────────────────────────────────────────────────
 // DOM REFERENCES
@@ -18,6 +24,22 @@ const progress = $('progress');
 const fill = document.querySelector('.fill');
 const spinner = document.querySelector('.spinner');
 const btnText = document.querySelector('.btn-text');
+
+// Settings DOM
+const mainView = $('mainView');
+const settingsView = $('settingsView');
+const settingsLink = $('settingsLink');
+const backBtn = $('backBtn');
+const saveSettingsBtn = $('saveSettingsBtn');
+const settingsStatus = $('settingsStatus');
+const aiToggle = $('opt-ai-enhance');
+const aiBadge = $('aiBadge');
+const providerSelect = $('llm-provider');
+const modelSelect = $('llm-model');
+const apiKeyInput = $('llm-api-key');
+const customUrlField = $('customUrlField');
+const customUrlInput = $('llm-custom-url');
+const toggleKeyBtn = $('toggleKeyVisibility');
 
 // ─────────────────────────────────────────────────────────
 // PROGRESS STEPS
@@ -61,7 +83,8 @@ const getOpts = () => ({
   fingerprint: $('opt-fingerprint').checked,
   external: $('opt-external').checked,
   screenshot: $('opt-screenshot').checked,
-  format: document.querySelector('input[name="format"]:checked').value,
+  exportFormat: document.querySelector('input[name="exportFormat"]:checked').value,
+  aiEnhance: aiToggle.checked,
 });
 
 // ─────────────────────────────────────────────────────────
@@ -85,6 +108,101 @@ const downloadFile = (content, filename, mime) => {
     });
   });
 };
+
+// ─────────────────────────────────────────────────────────
+// SETTINGS PANEL
+// ─────────────────────────────────────────────────────────
+function showSettings() {
+  mainView.hidden = true;
+  settingsView.hidden = false;
+}
+
+function hideSettings() {
+  mainView.hidden = false;
+  settingsView.hidden = true;
+}
+
+function populateModels(provider) {
+  const providerConfig = PROVIDERS[provider];
+  modelSelect.innerHTML = '<option value="">Default</option>';
+  if (providerConfig?.models?.length) {
+    providerConfig.models.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      modelSelect.appendChild(opt);
+    });
+  }
+  customUrlField.hidden = provider !== 'custom';
+}
+
+async function initSettings() {
+  const config = await loadLLMConfig();
+
+  providerSelect.value = config.provider || 'groq';
+  apiKeyInput.value = config.apiKey || '';
+  customUrlInput.value = config.customUrl || '';
+  populateModels(config.provider || 'groq');
+  if (config.model) modelSelect.value = config.model;
+
+  updateAIBadge(config);
+}
+
+function updateAIBadge(config) {
+  if (config.apiKey) {
+    aiBadge.textContent = `${PROVIDERS[config.provider]?.name || 'Custom'} ✓`;
+    aiBadge.className = 'ai-badge ready';
+  } else {
+    aiBadge.textContent = 'API key needed';
+    aiBadge.className = 'ai-badge';
+  }
+}
+
+// Settings event listeners
+settingsLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  showSettings();
+});
+
+backBtn.addEventListener('click', hideSettings);
+
+providerSelect.addEventListener('change', () => {
+  populateModels(providerSelect.value);
+});
+
+toggleKeyBtn.addEventListener('click', () => {
+  apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+  toggleKeyBtn.textContent = apiKeyInput.type === 'password' ? '👁️' : '🔒';
+});
+
+saveSettingsBtn.addEventListener('click', async () => {
+  const config = {
+    provider: providerSelect.value,
+    apiKey: apiKeyInput.value.replace(/^Bearer\s+/i, '').trim(),
+    model: modelSelect.value,
+    customUrl: customUrlInput.value.trim(),
+  };
+
+  await saveLLMConfig(config);
+  updateAIBadge(config);
+  settingsStatus.textContent = '✅ Settings saved';
+  setTimeout(() => { settingsStatus.textContent = ''; }, 2000);
+});
+
+// AI toggle validation
+aiToggle.addEventListener('change', async () => {
+  if (aiToggle.checked) {
+    const config = await loadLLMConfig();
+    if (!config.apiKey) {
+      aiToggle.checked = false;
+      showSettings();
+      settingsStatus.textContent = '⚠️ Please add an API key first';
+    }
+  }
+});
+
+// Initialize settings on load
+initSettings();
 
 // ─────────────────────────────────────────────────────────
 // MAIN HANDLER
@@ -156,14 +274,21 @@ btn.addEventListener('click', async () => {
 
     const downloads = [];
 
-    if (opts.format === 'md' || opts.format === 'both') {
+    if (opts.exportFormat === 'md-spec' || opts.exportFormat === 'both') {
+      downloads.push({
+        content: generateDesignSpec(data),
+        filename: `${baseName}.spec.md`,
+        mime: 'text/markdown',
+      });
+    }
+    if (opts.exportFormat === 'md-tech') {
       downloads.push({
         content: generateMarkdown(data),
         filename: `${baseName}.md`,
         mime: 'text/markdown',
       });
     }
-    if (opts.format === 'json' || opts.format === 'both') {
+    if (opts.exportFormat === 'json' || opts.exportFormat === 'both') {
       downloads.push({
         content: generateJSON(data, { pretty: true }),
         filename: `${baseName}.json`,
@@ -195,6 +320,36 @@ btn.addEventListener('click', async () => {
         filename: `${baseName}.tailwind.config.js`,
         mime: 'application/javascript',
       });
+    }
+
+    // ─── 7. AI-Enhanced DESIGN.md (if enabled) ───
+    if (opts.aiEnhance) {
+      const config = await loadLLMConfig();
+      if (config.apiKey) {
+        statusEl.textContent = '🤖 Generating AI-Enhanced DESIGN.md…';
+        btnText.textContent = 'AI Processing…';
+
+        try {
+          const llmResult = await callLLM(config, data, (msg) => {
+            statusEl.textContent = `🤖 ${msg}`;
+          });
+
+          downloads.push({
+            content: llmResult.markdown,
+            filename: `${baseName}.DESIGN.md`,
+            mime: 'text/markdown',
+          });
+
+          const usage = llmResult.usage;
+          if (usage) {
+            console.log(`LLM usage — prompt: ${usage.prompt_tokens}, completion: ${usage.completion_tokens}, total: ${usage.total_tokens}, model: ${llmResult.model}`);
+          }
+        } catch (llmErr) {
+          console.error('LLM error:', llmErr);
+          statusEl.textContent = `⚠️ AI generation failed: ${llmErr.message}. Other files still downloading.`;
+          await sleep(2000);
+        }
+      }
     }
 
     // Trigger downloads
